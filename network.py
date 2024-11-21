@@ -3,11 +3,11 @@ from torch import nn
 from torch.optim.adamw import AdamW
 import numpy as np
 
-class TemperatureForecasting (nn.Module):
+class TimeseriesForecasting (nn.Module):
     
-    def __init__(self):
+    def __init__(self, n_features):
         super().__init__()  
-        self.lstm = nn.LSTM(1, 150, batch_first=True)
+        self.lstm = nn.LSTM(n_features, 150, batch_first=True)
         self.linear = nn.Linear(150, 1)
         
     def forward (self, temp):
@@ -15,8 +15,8 @@ class TemperatureForecasting (nn.Module):
         res = self.linear(lstm_out[:,-1,:])
         return res
     
-def create_model():
-    return TemperatureForecasting()
+def create_model(n_features):
+    return TimeseriesForecasting(n_features)
   
 def train_loop(model, dataloader, batch_size):
     size = len(dataloader.dataset) 
@@ -25,7 +25,7 @@ def train_loop(model, dataloader, batch_size):
     optimizer = AdamW(model.parameters(), lr=1e-3)
     
     for batch, (x, y) in enumerate(dataloader): 
-        pred = model(x).squeeze()
+        pred = model(x)
         loss = loss_fn(pred, y.float())
         
         loss.backward()
