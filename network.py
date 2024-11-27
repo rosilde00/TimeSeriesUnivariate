@@ -5,27 +5,30 @@ import numpy as np
 
 class TimeseriesForecasting (nn.Module):
     
-    def __init__(self, n_features):
+    def __init__(self, n_features, n_units):
         super().__init__()  
-        self.lstm = nn.LSTM(n_features, 150, batch_first=True)
-        self.linear = nn.Linear(150, 1)
+        self.lstm = nn.LSTM(n_features, n_units, batch_first=True)
+        self.linear = nn.Sequential(
+            nn.Linear(n_units, 1),
+            nn.ReLU()
+        )
         
     def forward (self, temp):
         lstm_out, _ = self.lstm(temp)
         res = self.linear(lstm_out[:,-1,:])
         return res
     
-def create_model(n_features):
-    return TimeseriesForecasting(n_features)
+def create_model(n_features, n_units):
+    return TimeseriesForecasting(n_features, n_units)
   
-def train_loop(model, dataloader, batch_size):
+def train_loop(model, dataloader, batch_size, lr):
     size = len(dataloader.dataset) 
     model.train() 
     loss_fn = nn.MSELoss()
-    optimizer = AdamW(model.parameters(), lr=1e-3)
+    optimizer = AdamW(model.parameters(), lr)
     
     for batch, (x, y) in enumerate(dataloader): 
-        pred = model(x)
+        pred = model(x).squeeze()
         loss = loss_fn(pred, y.float())
         
         loss.backward()
@@ -45,7 +48,7 @@ def validation_loop(model, dataloader):
 
     with torch.no_grad():
         for x, y in dataloader:
-            pred = model(x)
+            pred = model(x).squeeze()
             avg_mse += mse(pred, y.float()).item()
             avg_mae += mae(pred, y.float()).item()
 

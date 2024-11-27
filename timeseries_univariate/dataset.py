@@ -7,7 +7,7 @@ class TemperatureDataset(Dataset):
     def __init__(self, temperatures, window):
         self.temperatures = temperatures
         self.window = window
-        self.len = len(self.temperatures)-self.window-1
+        self.len = len(self.temperatures)-self.window
         
     def __len__(self):
         return self.len
